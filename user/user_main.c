@@ -13,40 +13,47 @@
 } while ( 0 )
 #endif
 
-// static char json_ble_send[500];
-static os_timer_t mqtt_timer;
 
-// #include "stdout.h"
 #include "mqtt.h"
 #include "mqtt_client.h"
 extern MQTT_Client mqttClient;
 
+// Every 5 sec...
+#define MQTT_STATUS_INTERVAL2 (5*1000)
 
-extern void mqtt_client_init(void);
-static void ICACHE_FLASH_ATTR mqtt_check(void *args)
-{
+static ETSTimer mqttStatusTimer2;
 
+
+// Timer callback to send an RSSI update to a monitoring system
+static void ICACHE_FLASH_ATTR mqttStatusCb2(void *v) {
   if (mqttClient.connState != MQTT_CONNECTED)
-	{
-		NOTICE("====================== MQTT BAD, restarting\r\n");
-		//force a watchdog timeout and reset by doing something stupid like this here loop
-		while(1){};
-	}
+    return;
+
+  char json_ble_send [500];
+  memset(json_ble_send, 0, 500);
+  os_sprintf(json_ble_send, "{\"hostname\": \"host\",\r\n\"beacon_type\": \"ibeacon\",\r\n\"mac\": \"mac\",\r\n\"rssi\": rssi,\r\n\"uuid\": \"uuid\",\r\n\"major\": \"major\",\r\n\"minor\": \"minor\",\r\n\"tx_power\": \"tx\"}");
+  char topic [130];
+  memset(topic, 0, 130);
+  os_sprintf(topic, "happy-bubbles-ble");
+
+  bool status = MQTT_Publish(&mqttClient, topic, json_ble_send, os_strlen(json_ble_send), 1, 0);
+  NOTICE("sent mqtt message result: %d", status);
+
 }
 
 
 void app_init() {
 
 
-  // stdoutInit();
-
 
 
   NOTICE("SFW: initializing MQTT");
-  mqtt_client_init();
 
-  //MQTT Timer
-	os_timer_disarm(&mqtt_timer);
-	os_timer_setfn(&mqtt_timer, (os_timer_func_t *)mqtt_check, NULL);
-	os_timer_arm(&mqtt_timer, 60000, 1);
+  #ifdef MQTT
+    os_timer_disarm(&mqttStatusTimer2);
+    os_timer_setfn(&mqttStatusTimer2, mqttStatusCb2, NULL);
+    os_timer_arm(&mqttStatusTimer2, MQTT_STATUS_INTERVAL2, 1); // recurring timer
+  #endif // MQTT
+
+
 }
