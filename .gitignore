@@ -1,5 +1,3 @@
-build/
-firmware/
 espfs/mkespfsimage/*.o
 espfs/mkespfsimage/mkespfsimage
 webpages.espfs
