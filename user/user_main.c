@@ -29,7 +29,7 @@ static char ble_mac_addr[13];
 static char ble_rssi [5];
 static char ble_is_scan_resp [2];
 static char ble_type [2];
-static char ble_data[100];
+static char ble_data[300];
 
 static char serial_buffer[200];
 
@@ -84,7 +84,7 @@ process_serial(char *buf)
 	memset(ble_rssi, 0, 5);
 	memset(ble_is_scan_resp, 0, 1);
 	memset(ble_type, 0, 1);
-	memset(ble_data, 0, 100);
+	memset(ble_data, 0, 300);
 
 	while(pch != NULL)
 	{
